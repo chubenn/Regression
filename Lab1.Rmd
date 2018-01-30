@@ -1,0 +1,99 @@
+---
+title: "Lab Number One"
+author: "Ben Chu"
+date: "January 23, 2018"
+output: html_document
+---
+```{r warning = FALSE, message = FALSE}
+library(tidyverse)
+```
+#cleaning the data
+```{r warning = FALSE}
+uncleanlab1 <- read.csv("C:/Users/Branly Mclanbry/Downloads/lab1.csv")
+lab1 <- uncleanlab1 %>%
+  mutate(
+    race = case_when(
+      qa == 1 ~ "white",
+      qa == 2 ~ "african-american",
+      qa == 3 ~ "hispanic/latino",
+      qa == 4 ~ "asian",
+      qa == 5 ~ "native american",
+      qa == 6 ~ "other"),
+    support = (q1a + q1b +q1c))
+```
+
+###1a
+These two are not statistically correlated with each other. *R*^2^ = .0007, *F*(1,76) = 0.06, *p* = .81
+
+```{r}
+regdat<-lm(support~qb,lab1)
+summary(regdat)
+cor.test(lab1$support,lab1$qb)
+```
+
+###1b
+```{r}
+newage = data.frame(qb=21)
+predict(regdat,newage)
+```
+
+###1c
+```{r}
+plot(lab1$support,lab1$qb)
+abline(lm(lab1$qb~lab1$support),col = "red")
+```
+
+#2a
+These two are statistically correlated with each other. *R*^2^ = .31, *F*(1,76) = 34.3, *p* < .001
+```{r}
+beldat <-lm(support~q3,lab1)
+summary(beldat)
+cor.test(lab1$support,lab1$q3)
+```
+###2b
+```{r}
+newbel <- data.frame(q3=7)
+predict(beldat,newbel)
+```
+###2c
+```{r}
+plot(lab1$support,lab1$q3)
+abline(lm(lab1$q3~lab1$support))
+```
+
+###3a
+These two are statistically correlated with each other. *R*^2^ = .06, *F*(1,76) = 5.13, *p* < .05
+```{r}
+knowdat <-lm(support~q2,lab1)
+summary(knowdat)
+cor.test(lab1$support,lab1$q2)
+```
+###3b
+```{r}
+newknow <- data.frame(q2=1)
+predict(knowdat,newknow)
+```
+###3c
+```{r}
+plot(lab1$support,lab1$q2)
+abline(lm(lab1$q2~lab1$support))
+```
+
+###4 
+
+```{r}
+library(stats)
+cor.test(lab1$support,lab1$qb)
+cor.test(lab1$support,lab1$q3)
+cor.test(lab1$support,lab1$q2)
+```
+Appears to me that personal benefit is the strongest correlation, because the correlation is the largest.
+
+###5 
+
+I do not think it is a good analysis because ethnicity is a factors instead of numeric. Continuous variables are necessry for correlations.
+
+###6
+
+Restriction of range occurs with continuous variables that are not acurately/completely represented. I imagine that age may cause a problem regarding restriction of range. The dataset has a small range with all the 20 year olds.
+
