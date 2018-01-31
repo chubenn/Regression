@@ -1,0 +1,122 @@
+---
+title: "Lab 2"
+author: "Ben Chu"
+date: "January 30, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache = TRUE, dpi = 300)
+```
+
+###Loading in packages
+```{r warning = FALSE, message = FALSE}
+library(tidyverse)
+library(car)
+library(QuantPsyc)
+library(stats)
+```
+
+####Creating the dataset
+```{r}
+student <- seq(1:12)
+exam <- c(100,72,84,41,69,74,95,94,81,83,65,61)
+attend <- c(13,15,10,5,9,9,12,9,10,11,2,8)
+gpa <- c(3.4,3.9,3.4,2.3,3.0,2.6,4.0,3.9,2.9,3.4,2.2,3.8)
+class <- data.frame (student,exam,attend,gpa)
+```
+
+##Q1a
+```{r}
+attendgpa <-lm(exam~attend, data = class)
+summary(attendgpa)
+```
+I would tell the professor that attendence significantly predicts exam scores *R*^2^ = 0.3732, *F*(1,10) = 5.95, *p* <.05
+
+##Q1b
+```{r}
+examgpa <- lm(exam~gpa, data = class)
+summary(examgpa)
+```
+I would tell the professor that GPA scores significantly predicts exam scores *R*^2^ = 0.3389, *F*(1,10) = 5.125, *p* <.05
+
+##Q1c
+```{r}
+examscoresattend <- lm(exam~gpa+attend, data = class)
+summary(examscoresattend)
+```
+I would tell the professors that GPA scores with attendence do not significantly predict exam scores *R*^2^ = 0.4126, *F*(2,9) = 3.16, *p* = 0.09
+
+##Q1d
+```{r}
+cor.test(class$gpa,class$attend)
+```
+* The instructor is referring to a multiple regression.
+* The contradiction exists because the model now consists of multiple predictor values, which if correlated may deflate the *r*^2^ value
+
+##Q1e
+```{r}
+new.dat = data.frame(attend = 0, gpa = 2.0)
+badgrade <- predict(examscoresattend,new.dat)
+```
+### The student who does not go to class and has a gpa of 2.0 would receive a `r round(badgrade)`
+
+##Q2
+###Loading data
+```{r}
+load("C:/Users/Branly Mclanbry/Downloads/lab2AA.RData")
+```
+renaming and cleaning data
+```{r warning=FALSE}
+clean_dat <- lab2AA %>%
+ mutate(
+   p_agree = q1agree,
+   p_fair = q1fair,
+   p_eff = q1eff,
+   education = q4,
+   employment = q5,
+   happiness = q7,
+   job_choice = q8,
+   job_satis = q9,
+   ethnicity = qa,
+   aa_support = (p_agree + p_fair + p_eff))%>%
+  na.omit()
+```
+###General linear model with all variables
+```{r}
+every.mod <- lm(aa_support ~ education + employment + happiness + job_choice + job_satis, dat = clean_dat)
+summary(every.mod)
+lm.beta(every.mod)
+```
+###Cleaning across racial lines
+```{r}
+white <- clean_dat %>% 
+  filter(ethnicity == "White") %>%
+  na.omit()
+         
+minority <- clean_dat %>%
+  filter(ethnicity != "White")
+```
+##Running series of linear models
+```{r}
+white.1 <- lm(aa_support ~ education + employment, dat = white)
+white.2 <- lm(aa_support ~ education + employment + happiness + job_choice + job_satis, dat = white)
+minority.1 <- lm(aa_support ~ education + employment, dat = minority)
+minority.2 <- lm(aa_support ~ education + employment + happiness + job_choice + job_satis, dat = minority)
+```
+###Let's take a look at all the models and some standardized units *b* *
+```{r}
+summary(white.1)
+lm.beta(white.1)
+summary(white.2)
+lm.beta(white.2)
+summary(minority.1)
+lm.beta(minority.1)
+summary(minority.2)
+lm.beta(minority.2)
+```
+##Lastly, comparison of models against each other.
+```{r}
+anova(minority.1,minority.2)
+anova(white.1,white.2)
+```
