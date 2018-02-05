@@ -131,7 +131,8 @@ $(document).ready(function () {
 <pre class="r"><code>library(tidyverse)
 library(car)
 library(QuantPsyc)
-library(stats)</code></pre>
+library(stats)
+library(lmSupport)</code></pre>
 <div id="creating-the-dataset" class="section level4">
 <h4>Creating the dataset</h4>
 <pre class="r"><code>student &lt;- seq(1:12)
@@ -307,7 +308,7 @@ white.2 &lt;- lm(aa_support ~ education + employment + happiness + job_choice + 
 minority.1 &lt;- lm(aa_support ~ education + employment, dat = minority)
 minority.2 &lt;- lm(aa_support ~ education + employment + happiness + job_choice + job_satis, dat = minority)</code></pre>
 <div id="lets-take-a-look-at-all-the-models-and-some-standardized-units-b" class="section level3">
-<h3>Let’s take a look at all the models and some standardized units <em>b</em> *</h3>
+<h3>Let’s take a look at all the models and some standardized units <em>b</em>*</h3>
 <pre class="r"><code>summary(white.1)</code></pre>
 <pre><code>## 
 ## Call:
@@ -408,32 +409,105 @@ minority.2 &lt;- lm(aa_support ~ education + employment + happiness + job_choice
 <pre class="r"><code>lm.beta(minority.2)</code></pre>
 <pre><code>##  education employment  happiness job_choice  job_satis 
 ## 0.01732864 0.23604759 0.09719706 0.09817709 0.19297729</code></pre>
+<p>The writes up suggest that for white participants, affirmitave action is supported multiple variables <em>R</em><sup>2</sup> = 0.14, <em>F</em>(2,173) = 14.29, <em>p</em> &lt;.05. Although, not all variables contributed to the prediction. Greater education (<em>b</em>* = .45, <em>p</em> &lt; .05) related to more support for affirmative action. Employment did not relate to affirmative action (<em>b</em>* = -.10, <em>p</em> = .50)</p>
+<p>For minority participants, affirmitave action is supported multiple variables <em>R</em><sup>2</sup> = 0.22, <em>F</em>(2,161) = 23, <em>p</em> &lt;.05. Although, not all variables contributed to the prediction. Greater employment (<em>b</em>* = .40, <em>p</em> &lt; .05) related to more support for affirmative action. Education did not relate to affirmative action (<em>b</em>* = .10, <em>p</em> = .29)</p>
 </div>
 </div>
 <div id="lastly-comparison-of-models-against-each-other." class="section level2">
 <h2>Lastly, comparison of models against each other.</h2>
-<pre class="r"><code>anova(minority.1,minority.2)</code></pre>
-<pre><code>## Analysis of Variance Table
+<pre class="r"><code>anova(minority.1,minority.2)
+anova(white.1,white.2)</code></pre>
+<p>I like to use <code>modelCompare</code></p>
+<pre class="r"><code>modelCompare(minority.1,minority.2)</code></pre>
+<pre><code>## SSE (Compact) =  3195.92 
+## SSE (Augmented) =  2900.129 
+## Delta R-Squared =  0.07198628 
+## Partial Eta-Squared (PRE) =  0.09255275 
+## F(3,158) = 5.371601, p = 0.001509836</code></pre>
+<pre class="r"><code>modelCompare(white.1,white.2)</code></pre>
+<pre><code>## SSE (Compact) =  2587.155 
+## SSE (Augmented) =  2322.668 
+## Delta R-Squared =  0.08773977 
+## Partial Eta-Squared (PRE) =  0.1022308 
+## F(3,170) = 6.452751, p = 0.0003660598</code></pre>
+<p>Looking at the hierarchical multiple regression, we find that the <em>R</em><sup>2</sup> change = 0.09, <em>p</em> &lt; .05 for white participants. For minorities, the <em>R</em><sup>2</sup> change = 0.07,<em>p</em> &lt; .05</p>
+</div>
+<div id="semi-partial-correlations" class="section level2">
+<h2>Semi-partial correlations</h2>
+<div id="here-is-the-formula-that-is-used." class="section level3">
+<h3>Here is the formula that is used.</h3>
+<pre class="r"><code>values &lt;-summary(white.2)
+r2 &lt;- values$r.squared[1]
+dfr&lt;-values$df[2]
+dfr
+values &lt;-summary(white.2)
+r2 &lt;- values$r.squared[1]
+dfr&lt;-values$df[2]
+t1 &lt;- values$coefficients[2,3]
+t2 &lt;- values$coefficients[3,3]
+t3 &lt;- values$coefficients[4,3]
+t4 &lt;- values$coefficients[5,3]
+t5 &lt;- values$coefficients[6,3]
+sr1&lt;-((t1^2)/dfr)*(1-r2)
+sr2&lt;-((t2^2)/dfr)*(1-r2)
+sr3&lt;-((t3^2)/dfr)*(1-r2)
+sr4&lt;-((t4^2)/dfr)*(1-r2)
+sr5&lt;-((t5^2)/dfr)*(1-r2)</code></pre>
+<p>Here is the <code>modelEffectSizes</code>.</p>
+<pre class="r"><code>modelEffectSizes(white.2)</code></pre>
+<pre><code>## lm(formula = aa_support ~ education + employment + happiness + 
+##     job_choice + job_satis, data = white)
 ## 
-## Model 1: aa_support ~ education + employment
-## Model 2: aa_support ~ education + employment + happiness + job_choice + 
-##     job_satis
-##   Res.Df    RSS Df Sum of Sq      F  Pr(&gt;F)   
-## 1    161 3195.9                               
-## 2    158 2900.1  3    295.79 5.3716 0.00151 **
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
-<pre class="r"><code>anova(white.1,white.2)</code></pre>
-<pre><code>## Analysis of Variance Table
+## Coefficients
+##                   SSR df pEta-sqr dR-sqr
+## (Intercept) 1520.1221  1   0.3956     NA
+## education    103.1508  1   0.0425 0.0342
+## employment     3.8943  1   0.0017 0.0013
+## happiness      0.0079  1   0.0000 0.0000
+## job_choice    86.4512  1   0.0359 0.0287
+## job_satis    152.0485  1   0.0614 0.0504
 ## 
-## Model 1: aa_support ~ education + employment
-## Model 2: aa_support ~ education + employment + happiness + job_choice + 
-##     job_satis
-##   Res.Df    RSS Df Sum of Sq      F    Pr(&gt;F)    
-## 1    173 2587.2                                  
-## 2    170 2322.7  3    264.49 6.4528 0.0003661 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+## Sum of squared errors (SSE): 2322.7
+## Sum of squared total  (SST): 3014.4</code></pre>
+<pre class="r"><code>modelEffectSizes(minority.2)</code></pre>
+<pre><code>## lm(formula = aa_support ~ education + employment + happiness + 
+##     job_choice + job_satis, data = minority)
+## 
+## Coefficients
+##                  SSR df pEta-sqr dR-sqr
+## (Intercept) 352.7864  1   0.1085     NA
+## education     0.6577  1   0.0002 0.0002
+## employment  102.5918  1   0.0342 0.0250
+## happiness    18.5925  1   0.0064 0.0045
+## job_choice   13.7110  1   0.0047 0.0033
+## job_satis    54.1720  1   0.0183 0.0132
+## 
+## Sum of squared errors (SSE): 2900.1
+## Sum of squared total  (SST): 4109.0</code></pre>
+<pre class="r"><code>lm.describeData(white)</code></pre>
+<pre><code>## Warning in lm.describeData(white): 'lm.describeData' is deprecated.
+## Use 'varDescribe' instead.</code></pre>
+<pre><code>##            vars   n mean   sd median min max skew kurtosis
+## q1agree       1 176 2.72 1.62      2   1   7 0.74    -0.35
+## q1fair        2 176 2.68 1.56      2   1   7 1.02     0.46
+## q1eff         3 176 2.87 1.42      3   1   6 0.46    -0.68
+## q4            4 176 2.37 1.77      1   1   7 1.03    -0.30
+## q5            5 176 2.27 1.60      2   1   7 1.07     0.04
+## q7            6 176 2.33 1.58      2   1   7 1.00     0.03
+## q8            7 176 2.33 1.73      2   1   7 1.25     0.59
+## q9            8 176 2.31 1.71      1   1   7 1.15     0.30
+## qa*           9 176 1.00 0.00      1   1   1  NaN      NaN
+## p_agree      10 176 2.72 1.62      2   1   7 0.74    -0.35
+## p_fair       11 176 2.68 1.56      2   1   7 1.02     0.46
+## p_eff        12 176 2.87 1.42      3   1   6 0.46    -0.68
+## education    13 176 2.37 1.77      1   1   7 1.03    -0.30
+## employment   14 176 2.27 1.60      2   1   7 1.07     0.04
+## happiness    15 176 2.33 1.58      2   1   7 1.00     0.03
+## job_choice   16 176 2.33 1.73      2   1   7 1.25     0.59
+## job_satis    17 176 2.31 1.71      1   1   7 1.15     0.30
+## ethnicity*   18 176 1.00 0.00      1   1   1  NaN      NaN
+## aa_support   19 176 8.27 4.15      8   3  19 0.69    -0.16</code></pre>
+</div>
 </div>
 
 

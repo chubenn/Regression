@@ -15,6 +15,7 @@ library(tidyverse)
 library(car)
 library(QuantPsyc)
 library(stats)
+library(lmSupport)
 ```
 
 ####Creating the dataset
@@ -104,7 +105,7 @@ white.2 <- lm(aa_support ~ education + employment + happiness + job_choice + job
 minority.1 <- lm(aa_support ~ education + employment, dat = minority)
 minority.2 <- lm(aa_support ~ education + employment + happiness + job_choice + job_satis, dat = minority)
 ```
-###Let's take a look at all the models and some standardized units *b* *
+###Let's take a look at all the models and some standardized units _b_*
 ```{r}
 summary(white.1)
 lm.beta(white.1)
@@ -115,8 +116,51 @@ lm.beta(minority.1)
 summary(minority.2)
 lm.beta(minority.2)
 ```
+The writes up suggest that for white participants, affirmitave action is supported multiple variables *R*^2^ = 0.14, *F*(2,173) = 14.29, *p* <.05. Although, not all variables contributed to the prediction. Greater education (_b_* = .45, *p* < .05) related to  more support for affirmative action. Employment did not relate to affirmative action (_b_* = -.10, *p* = .50)
+
+For minority participants, affirmitave action is supported multiple variables *R*^2^ = 0.22, *F*(2,161) = 23, *p* <.05. Although, not all variables contributed to the prediction. Greater employment (_b_* = .40, *p* < .05) related to  more support for affirmative action. Education did not relate to affirmative action (_b_* = .10, *p* = .29)
+
 ##Lastly, comparison of models against each other.
-```{r}
+```{r eval = FALSE}
 anova(minority.1,minority.2)
 anova(white.1,white.2)
+```
+I like to use `modelCompare`
+```{r}
+modelCompare(minority.1,minority.2)
+modelCompare(white.1,white.2)
+```
+
+Looking at the hierarchical multiple regression, we find that the _R_^2^ change = `r round(summary(white.2)$r.squared - summary(white.1)$r.squared,2)`, *p* < .05 for white participants. For minorities, the _R_^2^ change = `r  round(summary(minority.2)$r.squared - summary(minority.1)$r.squared,2)`,*p*  < .05
+
+##Semi-partial correlations
+
+### Here is the formula that is used.
+```{r eval = FALSE}
+values <-summary(white.2)
+r2 <- values$r.squared[1]
+dfr<-values$df[2]
+dfr
+values <-summary(white.2)
+r2 <- values$r.squared[1]
+dfr<-values$df[2]
+t1 <- values$coefficients[2,3]
+t2 <- values$coefficients[3,3]
+t3 <- values$coefficients[4,3]
+t4 <- values$coefficients[5,3]
+t5 <- values$coefficients[6,3]
+sr1<-((t1^2)/dfr)*(1-r2)
+sr2<-((t2^2)/dfr)*(1-r2)
+sr3<-((t3^2)/dfr)*(1-r2)
+sr4<-((t4^2)/dfr)*(1-r2)
+sr5<-((t5^2)/dfr)*(1-r2)
+```
+Here is the `modelEffectSizes`. 
+```{r}
+modelEffectSizes(white.2)
+modelEffectSizes(minority.2)
+```
+
+```{r}
+lm.describeData(white)
 ```
