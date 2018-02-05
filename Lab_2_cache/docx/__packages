@@ -1,0 +1,17 @@
+base
+tidyverse
+ggplot2
+tibble
+tidyr
+readr
+purrr
+dplyr
+stringr
+forcats
+car
+boot
+MASS
+QuantPsyc
+lmSupport
+bindrcpp
+papaja

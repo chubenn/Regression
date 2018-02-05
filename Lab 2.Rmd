@@ -16,6 +16,7 @@ library(car)
 library(QuantPsyc)
 library(stats)
 library(lmSupport)
+library(papaja)
 ```
 
 ####Creating the dataset
@@ -116,9 +117,9 @@ lm.beta(minority.1)
 summary(minority.2)
 lm.beta(minority.2)
 ```
-The writes up suggest that for white participants, affirmitave action is supported multiple variables *R*^2^ = 0.14, *F*(2,173) = 14.29, *p* <.05. Although, not all variables contributed to the prediction. Greater education (_b_* = .45, *p* < .05) related to  more support for affirmative action. Employment did not relate to affirmative action (_b_* = -.10, *p* = .50)
+The writes up suggest that for white participants, affirmitave action is supported multiple variables *R*^2^ = 0.14, *F*(2,173) = 14.29, *p* <.05. Although, not all variables contributed to the prediction. Greater perceived benefit of education (_b_* = .45, *p* < .05) related to  more support for affirmative action. Greater perceived benefit of employment did not relate to affirmative action (_b_* = -.10, *p* = .50)
 
-For minority participants, affirmitave action is supported multiple variables *R*^2^ = 0.22, *F*(2,161) = 23, *p* <.05. Although, not all variables contributed to the prediction. Greater employment (_b_* = .40, *p* < .05) related to  more support for affirmative action. Education did not relate to affirmative action (_b_* = .10, *p* = .29)
+For minority participants, affirmitave action is supported multiple variables *R*^2^ = 0.22, *F*(2,161) = 23, *p* <.05. Although, not all variables contributed to the prediction. Greater perceived benefit of employment (_b_* = .40, *p* < .05) is related to  more support for affirmative action. Greater perceived benefit of education did not relate to affirmative action (_b_* = .10, *p* = .29)
 
 ##Lastly, comparison of models against each other.
 ```{r eval = FALSE}
@@ -162,5 +163,13 @@ modelEffectSizes(minority.2)
 ```
 
 ```{r}
-lm.describeData(white)
+varDescribe(white, Detail = 3)
 ```
+
+##Making the table
+Predictor|Range|_M_(_SD_) |_b_*|_sr_^2^
+---------|-----|--------- |----|-------
+Education|  1-7|2.37(1.77)|.41 | .03
+Employement|1-7|2.27(1.60)|.24|.00
+Happiness| 1-7|2.33)1.58)|.10|.00
+R^2^
