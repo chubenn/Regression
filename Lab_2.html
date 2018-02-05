@@ -292,8 +292,8 @@ summary(every.mod)</code></pre>
 <pre><code>##   education  employment   happiness  job_choice   job_satis 
 ##  0.09871666  0.21827856  0.07550335 -0.05187809  0.29905318</code></pre>
 </div>
-<div id="cleaning-across-racial-lines" class="section level3">
-<h3>Cleaning across racial lines</h3>
+<div id="filtering-across-ethnicity-lines" class="section level3">
+<h3>filtering across ethnicity lines</h3>
 <pre class="r"><code>white &lt;- clean_dat %&gt;% 
   filter(ethnicity == &quot;White&quot;) %&gt;%
   na.omit()
@@ -526,10 +526,52 @@ sr5&lt;-((t5^2)/dfr)*(1-r2)</code></pre>
 ## job_satis      0.30 0.13
 ## ethnicity*      NaN 0.00
 ## aa_support    -0.16 0.31</code></pre>
+<pre class="r"><code>varDescribe(minority, Detail = 3)</code></pre>
+<pre><code>##            vars   n  mean   sd median trimmed  mad min max range  skew
+## q1agree       1 164  3.98 1.96    4.0    3.97 2.97   1   7     6 -0.12
+## q1fair        2 164  3.66 1.81    4.0    3.61 1.48   1   7     6  0.15
+## q1eff         3 164  3.86 1.64    4.0    3.91 1.48   1   7     6 -0.21
+## q4            4 164  4.73 1.87    5.0    4.86 2.22   1   7     6 -0.44
+## q5            5 164  4.61 1.88    5.0    4.73 1.48   1   7     6 -0.41
+## q7            6 164  3.68 1.85    4.0    3.64 1.48   1   7     6 -0.01
+## q8            7 164  4.27 1.91    4.5    4.33 2.22   1   7     6 -0.26
+## q9            8 164  3.74 1.96    4.0    3.68 2.97   1   7     6  0.02
+## qa*           9 164  3.43 0.88    3.0    3.39 1.48   2   6     4  0.79
+## p_agree      10 164  3.98 1.96    4.0    3.97 2.97   1   7     6 -0.12
+## p_fair       11 164  3.66 1.81    4.0    3.61 1.48   1   7     6  0.15
+## p_eff        12 164  3.86 1.64    4.0    3.91 1.48   1   7     6 -0.21
+## education    13 164  4.73 1.87    5.0    4.86 2.22   1   7     6 -0.44
+## employment   14 164  4.61 1.88    5.0    4.73 1.48   1   7     6 -0.41
+## happiness    15 164  3.68 1.85    4.0    3.64 1.48   1   7     6 -0.01
+## job_choice   16 164  4.27 1.91    4.5    4.33 2.22   1   7     6 -0.26
+## job_satis    17 164  3.74 1.96    4.0    3.68 2.97   1   7     6  0.02
+## ethnicity*   18 164  3.43 0.88    3.0    3.39 1.48   2   6     4  0.79
+## aa_support   19 164 11.49 5.02   12.0   11.55 5.93   3  21    18 -0.13
+##            kurtosis   se
+## q1agree       -1.26 0.15
+## q1fair        -1.01 0.14
+## q1eff         -0.90 0.13
+## q4            -0.97 0.15
+## q5            -0.92 0.15
+## q7            -1.01 0.14
+## q8            -1.10 0.15
+## q9            -1.18 0.15
+## qa*            1.23 0.07
+## p_agree       -1.26 0.15
+## p_fair        -1.01 0.14
+## p_eff         -0.90 0.13
+## education     -0.97 0.15
+## employment    -0.92 0.15
+## happiness     -1.01 0.14
+## job_choice    -1.10 0.15
+## job_satis     -1.18 0.15
+## ethnicity*     1.23 0.07
+## aa_support    -1.05 0.39</code></pre>
 </div>
 </div>
-<div id="making-the-table" class="section level2">
-<h2>Making the table</h2>
+<div id="table-1" class="section level2">
+<h2>Table 1</h2>
+<p><em>Model predicting support for affirmative action attitudes from white participants</em></p>
 <table>
 <thead>
 <tr class="header">
@@ -545,25 +587,138 @@ sr5&lt;-((t5^2)/dfr)*(1-r2)</code></pre>
 <td>Education</td>
 <td>1-7</td>
 <td>2.37(1.77)</td>
-<td>.41</td>
+<td>.40</td>
 <td>.03</td>
 </tr>
 <tr class="even">
 <td>Employement</td>
 <td>1-7</td>
 <td>2.27(1.60)</td>
-<td>.24</td>
+<td>.07</td>
 <td>.00</td>
 </tr>
 <tr class="odd">
 <td>Happiness</td>
 <td>1-7</td>
-<td>2.33)1.58)</td>
-<td>.10</td>
+<td>2.33(1.58)</td>
 <td>.00</td>
+<td>.00</td>
+</tr>
+<tr class="even">
+<td><em>R</em><sup>2</sup></td>
+<td></td>
+<td></td>
+<td>.14</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>Job Choice</td>
+<td>1-7</td>
+<td>2.33(1.73)</td>
+<td>.30</td>
+<td>.03</td>
+</tr>
+<tr class="even">
+<td>Job Satisfaction</td>
+<td>1-7</td>
+<td>2.31(1.71)</td>
+<td>.44</td>
+<td>.01</td>
+</tr>
+<tr class="odd">
+<td><em>R</em><sup>2</sup> Change</td>
+<td></td>
+<td></td>
+<td>.09</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><em>R</em><sup>2</sup> Model</td>
+<td></td>
+<td></td>
+<td>.23</td>
+<td></td>
 </tr>
 </tbody>
 </table>
+<hr />
+<p><em>Note</em>.* <em>p</em> &lt;.05. <em>n</em> = 170</p>
+</div>
+<div id="table-2" class="section level2">
+<h2>Table 2</h2>
+<p><em>Model predicting support for affirmative action attitudes from minority participants</em></p>
+<table>
+<thead>
+<tr class="header">
+<th>Predictor</th>
+<th>Range</th>
+<th><em>M</em>(<em>SD</em>)</th>
+<th><em>b</em>*</th>
+<th><em>sr</em><sup>2</sup></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Education</td>
+<td>1-7</td>
+<td>4.73(1.87)</td>
+<td>.02</td>
+<td>.00</td>
+</tr>
+<tr class="even">
+<td>Employement</td>
+<td>1-7</td>
+<td>4.61(1.88)</td>
+<td>.24</td>
+<td>.03</td>
+</tr>
+<tr class="odd">
+<td>Happiness</td>
+<td>1-7</td>
+<td>3.68(1.85)</td>
+<td>.10</td>
+<td>.00</td>
+</tr>
+<tr class="even">
+<td><em>R</em><sup>2</sup></td>
+<td></td>
+<td></td>
+<td>.22</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>Job Choice</td>
+<td>1-7</td>
+<td>4.27(1.91)</td>
+<td>.10</td>
+<td>.00</td>
+</tr>
+<tr class="even">
+<td>Job Satisfaction</td>
+<td>1-7</td>
+<td>3.74(1.96)</td>
+<td>.20</td>
+<td>.01</td>
+</tr>
+<tr class="odd">
+<td><em>R</em><sup>2</sup> Change</td>
+<td></td>
+<td></td>
+<td>.07</td>
+<td></td>
+</tr>
+<tr class="even">
+<td><em>R</em><sup>2</sup> Model</td>
+<td></td>
+<td></td>
+<td>.29</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><em>Note</em>.* <em>p</em> &lt;.05. <em>n</em> = 170</p>
+<p>In minority populations attitudes predicting affirmative action from a concrete belief system accounted for 22% of the variance in attitudes. However, there was an increase (<em>R</em><sup>2</sup> <em>change</em> = .07) when entering beliefs from an abstract perspective.</p>
+<p>This is compared to white populations whose support of affirmative action from a concrete belief system only acounted for 14% of the variance. While their attitudes did increase (<em>R</em><sup>2</sup> <em>change</em> = .09), the model only accounted for 23% of the total variance.</p>
 </div>
 
 

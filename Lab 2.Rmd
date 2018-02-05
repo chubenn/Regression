@@ -90,7 +90,7 @@ every.mod <- lm(aa_support ~ education + employment + happiness + job_choice + j
 summary(every.mod)
 lm.beta(every.mod)
 ```
-###Cleaning across racial lines
+###filtering across ethnicity lines
 ```{r}
 white <- clean_dat %>% 
   filter(ethnicity == "White") %>%
@@ -164,12 +164,42 @@ modelEffectSizes(minority.2)
 
 ```{r}
 varDescribe(white, Detail = 3)
+varDescribe(minority, Detail = 3)
 ```
 
-##Making the table
-Predictor|Range|_M_(_SD_) |_b_*|_sr_^2^
----------|-----|--------- |----|-------
-Education|  1-7|2.37(1.77)|.41 | .03
-Employement|1-7|2.27(1.60)|.24|.00
-Happiness| 1-7|2.33)1.58)|.10|.00
-R^2^
+##Table 1 
+_Model predicting support for affirmative action attitudes from white participants_  
+
+|Predictor|Range|_M_(_SD_) |_b_*|_sr_^2^
+|---------|-----|--------- |----|-------
+|Education|  1-7|2.37(1.77)|.40 | .03
+|Employement|1-7|2.27(1.60)|.07|.00
+|Happiness| 1-7|2.33(1.58)|.00|.00
+|_R_^2^ | | | .14| |
+|Job Choice |1-7|2.33(1.73)|.30|.03
+|Job Satisfaction|1-7|2.31(1.71)|.44|.01
+|_R_^2^ Change| | | .09| |
+|_R_^2^ Model| | | .23| |
+-----------------------------------------
+*Note*.* _p_ <.05. *n* = 170
+
+##Table 2 
+_Model predicting support for affirmative action attitudes from minority participants_  
+
+|Predictor|Range|_M_(_SD_) |_b_*|_sr_^2^
+|---------|-----|--------- |----|-------
+|Education|  1-7|4.73(1.87)|.02 | .00
+|Employement|1-7|4.61(1.88)|.24|.03
+|Happiness| 1-7|3.68(1.85)|.10|.00
+|_R_^2^    |    |      | .22| 
+|Job Choice |1-7|4.27(1.91)|.10|.00
+|Job Satisfaction|1-7|3.74(1.96)|.20|.01
+|_R_^2^ Change| | | .07| |
+|_R_^2^ Model| | | .29| |  
+*Note*.* _p_ <.05. *n* = 170
+
+
+In minority populations attitudes predicting affirmative action from a concrete belief system accounted for 22% of the variance in attitudes. However, there was an increase (_R_^2^ _change_ = .07) when entering beliefs from an abstract perspective.
+
+This is compared to white populations whose support of affirmative action from a concrete belief system only acounted for 14% of the variance. While their attitudes did increase (_R_^2^ _change_ = .09), the model only accounted for 23% of the total variance.
+
