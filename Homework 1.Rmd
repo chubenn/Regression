@@ -1,0 +1,119 @@
+---
+title: "Homework 1"
+author: "Ben Chu"
+date: "February 5, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,cache = TRUE)
+```
+#Question 1
+##Hand writing a correlation and double checking with R.
+```{r}
+esteem <- c(28,30,34,35,31,36,28,30,38,40)
+racism <- c(-10,-8,-14,6,5,4,-2,-3,3,4)
+mean.x <- mean(esteem)
+mean.y <- mean(racism)   
+sd.x <- sd(esteem)
+sd.y <- sd(racism)
+sx.sy <- sd.x*sd.y
+xprime <- esteem - mean.x
+yprime <- racism - mean.y
+xyprime <- sum(yprime*xprime)
+covxy <- xyprime/9
+correlation.coefficient <- covxy/sx.sy
+```
+##Graph with abline
+```{r}
+hwplot <- data.frame(esteem,racism)
+plot(hwplot$racism,hwplot$esteem)
+abline(lm(hwplot$esteem~hwplot$racism))
+```
+  
+Feelings of esteem are not positive correlated with feelings of racism _r_ = .50, _p_ = 0.13
+
+##Question 2
+###Generating a regression equation by hand and double checking with R.
+```{r}
+sx2 <- (sd.x)^2
+by <- covxy/sx2
+a <- mean.y-(by*mean.x)
+ycarrot<-a+(by*esteem)
+```
+
+##Question 3
+### Generating sums of squares with hand calculations and double checking with R.
+```{r}
+sstotal <- sum(yprime^2)
+ssregression <- sum((ycarrot-mean.y)^2)
+ssresidual <- sum((racism-(a+(by*esteem)))^2)
+r2 <-ssregression/sstotal
+r2
+model<-lm(esteem~racism)
+summary(model)
+```
+
+##4
+These calculations were calculated with r previously in the aforementioned questions.
+```{r}
+correlation.coefficient
+ycarrot
+r2
+```
+
+##5
+```{r}
+cor.test(esteem,racism)
+```
+95%[-0.18,0.86]. There is no relationship between esteem and racism. The null hypothesis cannot be rejected because there may be a zero relationship difference. Essentially, we are less than 5% sure that is zero is not potential correlation. 
+
+##6
+###Adding in an 11^th^ data point.
+```{r}
+esteem.2 <- c(28,30,34,35,31,36,28,30,38,40,40)
+racism.2 <- c(-10,-8,-14,6,5,4,-2,-3,3,4,-14)
+cor.test(esteem.2,racism.2)
+hwplot <- data.frame(esteem.2,racism.2)
+plot(hwplot$racism.2,hwplot$esteem.2)
+abline(lm(hwplot$esteem.2~hwplot$racism.2))
+```
+  
+The addition of the 11^th^ data point increases the correlation coefficient from `.51` to `.16`. This is dramatically pulling down the correlation. These scores are fairly distanced from the regression line which decreases the explanation power of variance.
+
+##q7
+###loading in the data 
+```{r warnings = TRUE}
+library(tidyverse)
+load("C:/Users/Branly Mclanbry/Downloads/hw1_7.RData")
+q7 <- hw1_7 %>% janitor::clean_names()
+```
+Now looking at the different types of predictions.
+```{r}
+examscores <- lm(score~satv, dat = q7)
+summary(examscores)
+lm.beta::lm.beta(examscores)
+lmSupport::modelEffectSizes(examscores)
+```
+Higher scores are predicted by previous exam scores _R_^2^ = .28, _F_(1,26) = 10.25, _p_ < .01. _b_* = .53
+
+##Q7
+###loading the data up
+```{r}
+load("C:/Users/Branly Mclanbry/Downloads/employee (5).RData")
+q8 <- employee %>% janitor::clean_names()
+```
+regression analysis
+```{r}
+emp.mod <- lm(salbegin~jobtime+prevexp, dat = q8)
+summary(emp.mod)
+emp.mod.2 <- lm(salbegin~jobtime+prevexp + educ, dat = q8)
+lmSupport::modelCompare(emp.mod,emp.mod.2)
+summary(emp.mod.2)
+lmSupport::modelSummary(emp.mod.2)
+lmSupport::modelEffectSizes(emp.mod.2)
+lm.beta::lm.beta(emp.mod.2)
+describe(q8$jobtime)
+describe(q8$prevexp)
+describe(q8$educ)
+``` 

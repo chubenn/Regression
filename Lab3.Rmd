@@ -1,0 +1,54 @@
+---
+title: "Lab 3"
+author: "Ben Chu"
+date: "February 6, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(psych)
+library(purrr)
+library(stats)
+library(DescTools)
+```
+### Loading data and packages.
+```{r}
+load("C:/Users/Branly Mclanbry/Downloads/lab3.RData")
+lab3 <- lab3 %>% janitor::clean_names()
+```
+descriptive statistics
+```{r echo = FALSE, warning = FALSE}
+describe(lab3)
+```
+qqplots
+```{r echo = FALSE}
+par(mfrow=c(2,2))
+pphehe <- function(x) {
+  print(qqnorm(x))
+  print(qqline(x))
+}
+p_list <- list(lab3$timedrs, lab3$phyheal, lab3$menheal, lab3$stress)
+map(p_list, pphehe)
+pphehe(lab3$menheal)
+```
+
+```{r}
+transform <- function(x){
+print("squareroot")
+squareroot <- (x+1)^.5
+print(round(Skew(squareroot,na.rm=TRUE, method=2,conf.level=.99),2))
+print("log")
+log <- log10(x+1)
+print(round(Skew(log,na.rm=TRUE, method=2,conf.level=.99),2))
+print("inverse")
+inverse <- 1/(x+1)
+print(round(Skew(inverse,na.rm=TRUE, method=2,conf.level=.99),2))
+}
+map(p_list, transform)
+transform(lab3$timedrs)
+transform(lab3$phyheal)
+transform(lab3$meanheal)
+transform(lab3$stress)
+```
