@@ -2,7 +2,7 @@
 title: "Lab 3"
 author: "Ben Chu"
 date: "February 6, 2018"
-output: word_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -12,43 +12,170 @@ library(psych)
 library(purrr)
 library(stats)
 library(DescTools)
+library(car)
 ```
 ### Loading data and packages.
 ```{r}
 load("C:/Users/Branly Mclanbry/Downloads/lab3.RData")
 lab3 <- lab3 %>% janitor::clean_names()
 ```
-descriptive statistics
+##Q1
+It appears that all variables are positively skewed. This is apparent in the 99% confidence intervals because 0 is no within the range. Similarly, kurtosis was an issue for all variables excelt mental health. 
+###Descriptive statistics
 ```{r echo = FALSE, warning = FALSE}
 describe(lab3)
 ```
-qqplots
+
+###Functions for plots
 ```{r echo = FALSE}
-par(mfrow=c(2,2))
-pphehe <- function(x) {
-  print(qqnorm(x))
-  print(qqline(x))
+pphehe <- function(x,var) {
+ (qqnorm(x, main = var))
+ (qqline(x))
+}
+denss <- function(x,var) {
+  plot(density(x), main = var)
 }
 p_list <- list(lab3$timedrs, lab3$phyheal, lab3$menheal, lab3$stress)
-map(p_list, pphehe)
-pphehe(lab3$menheal)
+names <- names(lab3[2:5])
+```
+###QQ Plots
+```{r}
+walk2(p_list,names,pphehe)
 ```
 
+###Density Plots
 ```{r}
-transform <- function(x){
-print("squareroot")
-squareroot <- (x+1)^.5
-print(round(Skew(squareroot,na.rm=TRUE, method=2,conf.level=.99),2))
-print("log")
-log <- log10(x+1)
-print(round(Skew(log,na.rm=TRUE, method=2,conf.level=.99),2))
-print("inverse")
-inverse <- 1/(x+1)
-print(round(Skew(inverse,na.rm=TRUE, method=2,conf.level=.99),2))
-}
-map(p_list, transform)
-transform(lab3$timedrs)
-transform(lab3$phyheal)
-transform(lab3$meanheal)
-transform(lab3$stress)
+walk2(p_list,names,denss)
 ```
+
+
+##Function for Skew and Kurtosis
+```{r message=FALSE, warning=FALSE}
+skurt <-function(x,var) {
+  skew.1 <- round(DescTools::Skew(x, method = 2, conf.level = .99),2)
+  print(var)
+  kurt.1 <- round(DescTools::Kurt(x, method = 2, conf.level = .99),2)
+  print(list(skew.1,kurt.1))
+}
+```
+###Skew and Kurt for all variables
+```{r message=FALSE, warning=FALSE}
+walk2(p_list,names,skurt)
+```
+
+##Function for transofmrations
+```{r}
+transform <- function(x,var){
+  print(var)
+  print("squareroot")
+  squareroot <- (x+1)^.5
+  print(round(DescTools::Skew(squareroot,na.rm=TRUE, method=2,conf.level=.99),2))
+  print("log")
+  log <- log10(x+1)
+  print(round(DescTools::Skew(log,na.rm=TRUE, method=2,conf.level=.99),2))
+  print("inverse")
+  inverse <- 1/(x+1)
+  print(round(DescTools::Skew(inverse,na.rm=TRUE, method=2,conf.level=.99),2))
+    print(var)
+  print("squareroot")
+  squareroot <- (x+1)^.5
+  print(round(DescTools::Kurt(squareroot,na.rm=TRUE, method=2,conf.level=.99),2))
+  print("log")
+  log <- log10(x+1)
+  print(round(DescTools::Kurt(log,na.rm=TRUE, method=2,conf.level=.99),2))
+  print("inverse")
+  inverse <- 1/(x+1)
+  print(round(DescTools::Kurt(inverse,na.rm=TRUE, method=2,conf.level=.99),2))
+}
+```
+##Q2
+###Transformations
+```{r message = FALSE, warning = FALSE}
+walk2(p_list,names,transform)
+```
+
+That's alot of numbers. At any rate, here are the best ones.`time at doctors` with a `log`. `Physical health` with `log`. `Mental Health` with `square root` and `mental health` with `square root`
+here's some code that adds it into the data file
+```{r}
+lab3 <- lab3 %>%
+  mutate(timedrs_log = log10(timedrs+1),
+         phyheal_log = log(phyheal+1),
+         menheal_sqrt = sqrt(menheal +1),
+         stress_sqrt = sqrt(stress +1))
+```    
+
+##Q3
+cause i'm lazy
+```{r message=FALSE, warning=FALSE}
+lazy.list <- list(lab3$timedrs,lab3$phyheal,lab3$menheal,lab3$stress,lab3$timedrs_log,lab3$phyheal_log,lab3$menheal_sqrt,lab3$stress_sqrt)
+lazy.names <- names(lab3[2:9])
+zz<-walk2(lazy.list,lazy.names,skurt)
+```
+Table.1 Skewness, kurtosis and confidence intervals
+-------------------------------------------------------------------------------------
+Variable(transformation)|Skewness[confidence interval]|Kurtosis[confidence interval]|  
+------------------------|-----------------------------|-----------------------------|
+Timedrs                 |3.25[2.64,4.03]              |13.10[8.16,21.32]            | 
+Timedrs(log)*           |0.23[0.00,.44]               |-0.18[-0.46,0.29]            | 
+phyheal                 |1.03[0.76,1.43]              |1.12[0.10,2.69]              | 
+phyheal_log*            |0.16[-0.02,0.35]             |-0.64[-0.89,-0.31]           | 
+menheal                 |0.60[0.41,0.84]              |-0.29[-0.69,0.35]            | 
+menheal_sqrt*           |-0.02[-0.19,0.14]            |-0.67[-0.89,-0.40]           | 
+stress                  |1.04[0.67,1.69]              |1.80[0.08,5.52]              | 
+stress_sqrt*            |-0.04[-0.27,0.30]            |0.00[-0.41,0.89]             | 
+------------------------------------------------------------------------------------
+*fixed problems with skew.
+
+##Q4
+### plots
+```{r}
+par(mfrow = c(2,2))
+plot(lab3$phyheal_log, lab3$timedrs_log)
+lines(lowess(lab3$phyheal_log, lab3$timedrs_log))
+plot(lab3$menheal_sqrt, lab3$timedrs_log)
+lines(lowess(lab3$menheal_sqrt, lab3$timedrs_log))
+plot(lab3$stress_sqrt, lab3$timedrs_log)
+lines(lowess(lab3$stress_sqrt, lab3$timedrs_log))
+```
+
+##Q5
+###untransformed
+```{r}
+heal.mod <- lm(timedrs ~ phyheal + menheal + stress, data = lab3)
+summary(heal.mod)
+par(mfrow = c(2,2))
+plot(heal.mod)
+vif(heal.mod)
+1/vif(heal.mod)
+lmtest::bptest(heal.mod, varformula = ~ fitted.values(heal.mod), studentize = FALSE)
+```
+
+##Q6
+###transformed
+Transformed variables are better than the untransformed. Furthermore, the residuals and plots are more evenly distributed. The Breusch-Pagan is not significant which indicates that data is homoscedastic.
+```{r}
+heal.mod.2 <- lm(timedrs_log ~ phyheal_log  + menheal_sqrt  + stress_sqrt, data = lab3)
+summary(heal.mod.2)
+par(mfrow = c(2,2))
+plot(heal.mod.2)
+lmtest::bptest(heal.mod.2, varformula = ~ fitted.values(heal.mod.2), studentize = FALSE)
+```
+
+##Q7
+Multicolinearity is also not a problem because the variance inflation factor and 1/VIF are low.
+```{r}
+vif(heal.mod.2)
+1/vif(heal.mod.2)
+```
+
+##Q8
+Multivariate outliers are not a problem because _p_ was not <.001.
+```{r}
+n <- 465
+hat <- hatvalues(heal.mod.2)
+mahun<-((n-1)*(hat))-1
+tail(sort(mahun),10)
+1-pchisq(13.99, df = 3)
+```
+
+
