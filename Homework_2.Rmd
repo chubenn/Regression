@@ -1,0 +1,142 @@
+---
+title: "Homework 2"
+author: "Ben Chu"
+date: "February 26, 2018"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(psych)
+library(purrr)
+library(stats)
+library(DescTools)
+library(car)
+library(lm.beta)
+library(lmtest)
+library(lmSupport)
+par(mfrow = c(2,2))
+options(warn=-1)
+```
+###Loading the data
+```{r}
+load("C:/Users/Branly Mclanbry/Downloads/grants.RData")
+hw2 <- grants %>% janitor::clean_names()
+```
+###Some functions
+```{r}
+pphehe <- function(x,var) {
+ (qqnorm(x, main = var))
+ (qqline(x))
+}
+denss <- function(x,var) {
+  plot(density(x), main = var)
+}
+
+skurt <-function(x,var) {
+  skew.1 <- round(DescTools::Skew(x, method = 2, conf.level = .99),2)
+  kurt.1 <- round(DescTools::Kurt(x, method = 2, conf.level = .99),2)
+  print(list(var,skew.1,kurt.1))
+}
+
+transformerbots <- function(x,var){
+  print(var)
+  print("squareroot")
+  squareroot <- (x+1)^.5
+  print(round(DescTools::Skew(squareroot,na.rm=TRUE, method=2,conf.level=.99),2))
+  squareroot <- (x+1)^.5
+  print(round(DescTools::Kurt(squareroot,na.rm=TRUE, method=2,conf.level=.99),2))
+  print("log")
+  log <- log10(x+1)
+  print(round(DescTools::Skew(log,na.rm=TRUE, method=2,conf.level=.99),2))
+  log <- log10(x+1)
+  print(round(DescTools::Kurt(log,na.rm=TRUE, method=2,conf.level=.99),2))
+   print("inverse")
+  inverse <- 1/(x+1)
+  print(round(DescTools::Skew(inverse,na.rm=TRUE, method=2,conf.level=.99),2))
+  inverse <- 1/(x+1)
+  print(round(DescTools::Kurt(inverse,na.rm=TRUE, method=2,conf.level=.99),2))
+}
+
+varlist <- list(hw2$submit,hw2$quality,hw2$univers,hw2$money)
+names <- names(hw2)
+```
+#Question 1
+```{r warnings = FALSE}
+walk2(varlist,names,pphehe)
+walk2(varlist,names,skurt)
+walk2(varlist,names,denss)
+varlist.1 <- list(hw2$univers,hw2$money)
+names.1 <- names(hw2[3:4])
+walk2(varlist.1,names.1,transformerbots)
+```
+Analysis suggests that money and university employer are positively skewed while quality and submissions are normally distributed.  
+The most effective transformation for university and money is the log. 
+```{r}
+hw2 <- hw2 %>%
+  mutate(univers_log = log10(univers+1),
+         money_log = log(money+1))
+```
+#Question 1b
+```{r}
+hw2.mod <- lm(money_log ~ univers_log + quality + submit, dat = hw2)
+summary(hw2.mod)
+lm.beta(hw2.mod)
+modelEffectSizes(hw2.mod)
+```
+
+#Question 1c
+```{r}
+plot(hw2.mod)
+```
+
+#Question 1d
+```{r}
+hw2.mod.2 <- lm(money ~ univers + quality + submit, dat = hw2)
+summary(hw2.mod.2)
+lm.beta(hw2.mod.2)
+modelEffectSizes(hw2.mod.2)
+```
+
+#Question 1e
+```{r}
+n <- 50
+hat <- hatvalues(hw2.mod)
+mahun<-((n-1)*(hat))-1
+tail(sort(mahun),10)
+1-pchisq(16.76, df = 3)
+```
+```{r}
+n <- 50
+hat <- hatvalues(hw2.mod.2)
+mahun<-((n-1)*(hat))-1
+tail(sort(mahun),10)
+1-pchisq(16.827, df = 3)
+```
+
+#Question 1f
+vif(hw2.mod)
+1/vif(hw2.mod)
+vif(hw2.mod.2)
+1/vif(hw2.mod.2)
+
+#Question 1g
+APA stuff, gotta do the write up.
+
+#Question 1h
+```{r}
+lmtest::bptest(hw2.mod, varformula = ~ fitted.values(hw2.mod), studentize = FALSE)
+```
+
+#Question 1i 
+
+#Question 1j
+```{r}
+lmtest::bptest(hw2.mod.2, varformula = ~ fitted.values(hw2.mod.2), studentize = FALSE)
+```
+#Question 1k
+```{r}
+library(MBESS)
+ci.R2(R2=.30,N=50,K=3,conf.level =.95)
+ci.R2(R2=.32,N=50,K=3,conf.level =.95)
+```
