@@ -1,0 +1,19 @@
+---
+title: "Lab4"
+author: "Ben Chu"
+date: "February 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Question 1
+Making the dataset
+```{r}
+instruction <- c("lecture","lecture","lecture","lecture","lecture","lab","lab","lab","lab","lab")
+scoores <- c(8,8,9,10,10,5,6,7,8,9)
+dumbolivia <- data.frame(instruction,scoores)
+t.test(dumbolivia$scoores~dumbolivia$instruction)
+
+```

@@ -2,7 +2,7 @@
 title: "Homework 2"
 author: "Ben Chu"
 date: "February 26, 2018"
-output: html_document
+output: word_document
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -61,7 +61,10 @@ transformerbots <- function(x,var){
 varlist <- list(hw2$submit,hw2$quality,hw2$univers,hw2$money)
 names <- names(hw2)
 ```
-#Question 1
+#Question 1a
+Analysis suggests that money and university employer are positively skewed while quality and submissions are normally distributed. Furthermore, Q-Q and density plots suggested deviations from normality for those variables.
+The most effective transformation for university and money is the log transformation. 
+
 ```{r warnings = FALSE}
 walk2(varlist,names,pphehe)
 walk2(varlist,names,skurt)
@@ -70,14 +73,15 @@ varlist.1 <- list(hw2$univers,hw2$money)
 names.1 <- names(hw2[3:4])
 walk2(varlist.1,names.1,transformerbots)
 ```
-Analysis suggests that money and university employer are positively skewed while quality and submissions are normally distributed.  
-The most effective transformation for university and money is the log. 
+
 ```{r}
 hw2 <- hw2 %>%
   mutate(univers_log = log10(univers+1),
          money_log = log(money+1))
 ```
 #Question 1b
+Submission quantity, submission quality, and university prestige both predict grant money  _R_^2^ = .30, _F_ (3,46) = 6.65, _p_ < .001. Some variables significantly predicted grant money, while other variables did not contribute much to the overall model. Increased submissions (_sr_^2^ = .08, _b_* = .47, _p_ < .05) and higher quality ratings (_sr_^2^ = .13, _b_* = .71, _p_ < .01) predicted grant contributions while university prestige did not (_sr_^2^ = .01, _b_* = .17, _p_ = .35). 
+Grant money increases as average submissions and grant quality increase, however university prestige does not increase grant money. 
 ```{r}
 hw2.mod <- lm(money_log ~ univers_log + quality + submit, dat = hw2)
 summary(hw2.mod)
@@ -86,57 +90,83 @@ modelEffectSizes(hw2.mod)
 ```
 
 #Question 1c
+The residuals seem like they meet all the assumptions. Linearity of residuals appears to be normal because of the nice even spread across the points. However, normality of residuals and homoscedasticity might violate the assumptions but still look normal. Comparitvely to the untransformed data, the residuals look better.
 ```{r}
 plot(hw2.mod)
 ```
 
 #Question 1d
+There are a few violations of data here. Linearity suggests that the data is not equally spread and even slightly clustered. Homoscedasticity is violated with values weighted to the left. Normality of residuals might suggest several outliers who are removed from the Q-Q line. Lastly, there appears to be several cases who are influencing the overall data.
 ```{r}
 hw2.mod.2 <- lm(money ~ univers + quality + submit, dat = hw2)
 summary(hw2.mod.2)
 lm.beta(hw2.mod.2)
-modelEffectSizes(hw2.mod.2)
+lmSupport::modelEffectSizes(hw2.mod.2)
+plot(hw2.mod.2)
 ```
 
 #Question 1e
+For the transformed data, there are no multivariate outliers. However, for the untransformed data, there is one multivaritate outlier, observation number 3 (16.45, _p_ < .001.
 ```{r}
 n <- 50
 hat <- hatvalues(hw2.mod)
 mahun<-((n-1)*(hat))-1
 tail(sort(mahun),10)
-1-pchisq(16.76, df = 3)
+1-pchisq(11.76, df = 3)
 ```
 ```{r}
-n <- 50
+n.2 <- 50
 hat <- hatvalues(hw2.mod.2)
-mahun<-((n-1)*(hat))-1
+mahun<-((n.2-1)*(hat))-1
 tail(sort(mahun),10)
-1-pchisq(16.827, df = 3)
+1-pchisq(16.45, df = 3)
 ```
 
 #Question 1f
+For the transformed, there is a problem with multicollinearity with quality at .26 and submission at .35. The problem exists due to high correlations between submission and quality, _r_ = -.80, 95% CI[-0.88,-0.67]. The rationale is that these two predictors are sharing explained variance. Several solutions are viable, robust and bootstrapped regressions require no assumptions due to resampling of data.
+```{r}
 vif(hw2.mod)
 1/vif(hw2.mod)
-vif(hw2.mod.2)
-1/vif(hw2.mod.2)
-
-#Question 1g
-APA stuff, gotta do the write up.
-
-#Question 1h
-```{r}
-lmtest::bptest(hw2.mod, varformula = ~ fitted.values(hw2.mod), studentize = FALSE)
+Hmisc::rcorr(as.matrix(hw2))
+cor.test(hw2$submit,hw2$quality)
 ```
 
-#Question 1i 
+#Question 1g
+Multiple variables were positively skewed and violated multiple assumptions including multicollinearity, homoscedasticity, and multivariate outliers. Log transformations were utilized and examination of residuals suggested that the values did not violate the assumptions.
 
-#Question 1j
+Average number of submissions, quality of ratings, and university prestige predicted grant money received. _R_^2^ = .30, _F_ (3,46) = 6.55, _p_ < .001. Increased submissions (_sr_^2^ = .08, _b_* = .47, _p_ < .05) and higher quality ratings (_sr_^2^ = .13, _b_* = .71, _p_ < .01) predicted grant contributions while university prestige did not (_sr_^2^ = .01, _b_* = .17, _p_ = .35).  
+Grant money increases as average submissions and grant quality increase, however university prestige does not increase grant money. 
+#Question 1h
+The Breusch-Pagan test would suggest that the untransformed data violates assumptions of homoscedasticity (_p_ < .001). Essentially, the assumption is not met.
+```{r}
+describe(hw2)
+lm.beta(hw2.mod)
+summary(hw2.mod)
+modelEffectSizes(hw2.mod)
+```
 ```{r}
 lmtest::bptest(hw2.mod.2, varformula = ~ fitted.values(hw2.mod.2), studentize = FALSE)
 ```
+
+#Question 1i 
+Utilizing a heteroscedasticity adjusted regression does suggest a different analyst, however it does raise the issue of minimizing standard error values. A heteroscedasticity adjusted regression adjusted standard errors in an upward direction. For the untransformed and non-heteroscedastic adjusted regression data, university quality is significant. However, when utilizing a heteroscedastic adjusted regression, the standard error is almost doubled but drops out of significance.  
+```{r}
+coeftest(hw2.mod.2, vcov=hccm)
+summary(hw2.mod.2)
+```
+#Question 1j
+The differences between the untransformed heteroscedastic regression analysis and the transformed non-heteroscedastic regression analysis are minimal. The standard errors deviate ~ 0.2 but the t-values and significances of the predictors are still suggestin the same thing. 
+```{r}
+coeftest(hw2.mod, vcov=hccm)
+summary(hw2.mod)
+```
 #Question 1k
+Transformed _R_^2^ 95% CI[0.67,0.49], _p_ <.05 
+Untransformed _R_^2^ 95% CI[0.11,0.54], _p_ <.05 
 ```{r}
 library(MBESS)
+# .30 = transformed
 ci.R2(R2=.30,N=50,K=3,conf.level =.95)
-ci.R2(R2=.32,N=50,K=3,conf.level =.95)
+# .36 = untransformed
+ci.R2(R2=.36,N=50,K=3,conf.level =.95)
 ```
