@@ -10,10 +10,183 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 #Question 1
 Making the dataset
-```{r}
-instruction <- c("lecture","lecture","lecture","lecture","lecture","lab","lab","lab","lab","lab")
-scoores <- c(8,8,9,10,10,5,6,7,8,9)
-dumbolivia <- data.frame(instruction,scoores)
-t.test(dumbolivia$scoores~dumbolivia$instruction)
+```{r warning = FALSE, error = FALSE,message = FALSE, tidy = TRUE}
+library(tidyverse)
+instruction <- c(rep("lecture",5),rep("lab",5),rep("discussion",5))
+scores <- c(5,6,7,8,9,8,8,9,10,10,4,4,5,5,6)
+dat <- data.frame(instruction,scores) %>%
+  mutate(instruction.numeric = as.numeric(instruction))
+```
 
+#Analysis
+```{r}
+t.test(dat$scores[1:10]~dat$instruction[1:10])
+aov.mod <- aov(scores~instruction,dat)
+summary(aov.mod)
+```
+##effect sizes
+```{r warning = FALSE, error = FALSE,message = FALSE, tidy = TRUE}
+library(lsr)
+library(psych)
+cohensD(dat$scores[1:10]~droplevels(dat$instruction[1:10]))
+etaSquared(aov.mod)
+tapply(dat$scores,dat$instruction,describe)
+```
+#doing regressiosn the wrong ways utilizing `as.numeric`
+```{r warning = FALSE, error = FALSE,message = FALSE, tidy = TRUE}
+wrong <- lm(scores~instruction.numeric,dat)
+summary(wrong)
+anova(wrong)
+plot(dat$instruction.numeric,dat$scores)
+abline(wrong)
+```
+#now doing it the right way.
+```{r warning = FALSE, error = FALSE,message = FALSE, tidy = TRUE}
+right <- lm(scores~instruction,dat)
+summary(right)
+anova(right)
+plot(dat$instruction,dat$scores)
+abline(right)
+```
+#loading some data
+```{r warning = FALSE, error = FALSE,message = FALSE, tidy = TRUE}
+load("~/GitHub/Regression/hand4.RData")
+library(Amelia)
+library(Zelig)
+library(mice)
+```  
+
+Imputing data via `Amelia`
+```{r}
+mi <- amelia(hand4, m = 20)
+missmap(mi)
+for(i in 1:20) {
+
+mi$imputations[[i]]$bds <- mi$imputations[[i]]$bds1 + mi$imputations[[i]]$bds2 + mi$imputations[[i]]$bds3 + mi$imputations[[i]]$bds4 + mi$imputations[[i]]$bds5 + mi$imputations[[i]]$bds6 + mi$imputations[[i]]$bds7
+
+
+mi$imputations[[i]]$edr <- mi$imputations[[i]]$edr1 + mi$imputations[[i]]$edr2 + mi$imputations[[i]]$edr3 + mi$imputations[[i]]$edr4 + mi$imputations[[i]]$edr5 + mi$imputations[[i]]$edr6
+}
+z.out <-zelig(edr~bds+abuse+bmi, model = "ls", data = mi) 
+summary(z.out)
+```
+
+Imputing data via `mice`
+```{r warning = FALSE, error = FALSE,message = FALSE, tidy = TRUE}
+imputed <- hand4 %>%
+  mice(m=20,maxit = 10, method = 'pmm', seed = 69) %>%
+  complete()
+missmap(imputed)
+```
+look at that, much better.
+```{r}
+imputed <- imputed %>%
+  mutate(bds = (bds1 + bds2 +bds3 +bds4 +bds5 +bds6 +bds7)/7,
+         edr = (edr1 + edr2 + edr3 +edr4 +edr5 +edr6))
+miss.out <- lm(edr~bds+abuse+bmi,imputed)
+summary(miss.out)
+```
+
+#how about some power?
+```{r}
+load("~/GitHub/Regression/lab3.RData")
+cor.dat <- cor(lab3)
+round(cor.dat,2)
+
+require(MASS)
+
+
+pwr.MRC<-function(ry1=NULL, ry2=NULL, ry3=NULL, r12=NULL, r13=NULL, r23=NULL,n=NULL, alpha=.05, rep = 10000,
+                        my=0,m1=0,m2=0,m3=0, sy=1,s1=1,s2=1,s3=1)
+  {
+
+pred<-NA
+pred[is.null(r23)]<-2
+pred[!is.null(r23)]<-3
+
+  if (pred=="2")
+    {pop <- mvrnorm(n, mu = c(my, m1, m2), Sigma = matrix(c(sy, ry1, ry2,
+                                                                     ry1, s1, r12,
+                                                                     ry2, r12, s2),
+                                                                   ncol = 3), empirical = TRUE)
+    pop2 = data.frame(pop)
+
+    values<-lm(X1~X2+X3, pop2)
+    values<-summary(values)
+
+    int<-(values$coefficients)[1,3]
+    tb1<-(values$coefficients)[2,3] #grabs t from each analysis
+    tb2<-(values$coefficients)[3,3]
+    R2<-values$r.squared
+    F<-values$fstatistic[1]
+    df1<-values$fstatistic[2]
+    df2<-values$fstatistic[3]
+
+    f2<-R2/(1-R2)
+    lambdaR2<-f2*df2
+    minusalpha<-1-alpha
+    FtR2<-qf(minusalpha, df1, df2)
+    powerR2<-round(1-pf(FtR2, df1,df2,lambdaR2),3)
+
+    lambdab1<-tb1^2
+    lambdab2<-tb2^2
+    Fb<-qf(minusalpha, 1, df2)
+    powerb1<-round(1-pf(Fb, 1,df2,lambdab1),3)
+    powerb2<-round(1-pf(Fb, 1,df2,lambdab2),3)
+
+    {print(paste("Sample size is ",n))}
+    {print(paste("Power R2 = ", powerR2))}
+    {print(paste("Power b1 = ", powerb1))}
+    {print(paste("Power b2 = ", powerb2))}
+     }
+
+  if (pred=="3")
+    {
+  pop <- mvrnorm(n, mu = c(my, m1, m2, m3), Sigma = matrix(c(sy, ry1, ry2, ry3, ry1, s1, r12, r13, ry2, r12,s2, r23, ry3, r13, r23, s3),
+                 ncol = 4), empirical = TRUE)
+  pop2 = data.frame(pop)
+
+  values<-lm(X1~X2+X3+X4, pop2)
+  values<-summary(values)
+
+  int<-(values$coefficients)[1,3]
+  tb1<-(values$coefficients)[2,3] #grabs t from each analysis
+  tb2<-(values$coefficients)[3,3]
+  tb3<-(values$coefficients)[4,3]
+  R2<-values$r.squared
+  F<-values$fstatistic[1]
+  df1<-values$fstatistic[2]
+  df2<-values$fstatistic[3]
+
+  f2<-R2/(1-R2)
+  lambdaR2<-f2*df2
+  minusalpha<-1-alpha
+  FtR2<-qf(minusalpha, df1, df2)
+  powerR2<-round(1-pf(FtR2, df1,df2,lambdaR2),3)
+
+  lambdab1<-tb1^2
+  lambdab2<-tb2^2
+  lambdab3<-tb3^2
+  Fb<-qf(minusalpha, 1, df2)
+  powerb1<-round(1-pf(Fb, 1,df2,lambdab1),3)
+  powerb2<-round(1-pf(Fb, 1,df2,lambdab2),3)
+  powerb3<-round(1-pf(Fb, 1,df2,lambdab3),3)
+
+
+  {print(paste("Sample size is ",n))}
+  {print(paste("Power R2 = ", powerR2))}
+  {print(paste("Power b1 = ", powerb1))}
+  {print(paste("Power b2 = ", powerb2))}
+  {print(paste("Power b3 = ", powerb3))}
+
+   }}
+
+
+
+##r2 ok
+pwr.MRC(.44,.26,.29,.50,.31,.37,50)
+##Stress
+pwr.MRC(.44,.26,.29,.50,.31,.37,100)
+##physical
+pwr.MRC(.44,.26,.29,.50,.31,.37,300)
 ```
