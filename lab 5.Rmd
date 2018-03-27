@@ -1,0 +1,110 @@
+---
+title: "Lab 5"
+author: "Ben Chu"
+date: "March 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(car)
+library(jtools)
+```
+
+#1
+```{r}
+options(contrasts = c('contr.helmert', 'contr.poly'))
+
+training <- factor(c(rep(1,8),rep(2,8)))
+stress <- factor(c(1,1,2,2,3,3,4,4,1,1,2,2,3,3,4,4))
+exp <- c(2,9,2,19,7,0,10,12,4,2,2,3,4,2,2,0)
+err <- c(3,5,4,6,5,9,4,6,4,4,5,3,5,5,10,10)
+
+dat <- data.frame(training,stress,exp,err)
+
+mod.1 <- lm(err~training + stress + training:stress, dat)
+Anova(mod.1, type = 3)
+
+```
+#1b
+```{r}
+mod.2 <- lm(err~training + stress, dat)
+mod.3 <- lm(err~training + stress + training:stress, dat)
+
+anova(mod.2,mod.3)
+```
+#2
+```{r}
+mod.4 <- lm(err~stress + exp + stress:exp, dat)
+summary(mod.4)
+
+ggplot(dat, aes(x = exp, err, color = stress)) +
+  geom_smooth(aes(linetype = stress), method = 'lm', se = F)
+```
+
+
+I think plain english would be, there is an interaction, specifically that errors increase as stress goes up for conditions 1 and 2. Errors go down for stress levels 3 and 4.
+
+#3
+```{r}
+dat <- dat %>% mutate(stress.num = as.numeric(stress))
+
+mod.5 <- lm(err~stress.num*exp,dat)
+summ(mod.5,center = TRUE)
+
+sim_slopes(mod.5, pred = stress.num, modx = exp, johnson_neyman = FALSE, cond.int = TRUE, centered = c('stress.num', 'exp'))
+
+interact_plot(mod.5, stress.num, modx = exp, centered = c('stress.num', 'exp'), plot.points = TRUE) 
+```
+
+
+Essentially, experience has a negative slope with errors made.
+
+#3a
+```{r}
+mod.6 <- lm(err~stress.num + exp + stress.num:exp,dat)
+summary(mod.6, type = 3)
+```
+Interaction is significant, so we are not justified in using ANCOVA.
+
+#4
+```{r}
+load("C:/Users/Branly Mclanbry/Downloads/lab5.RData")
+
+mod.6 <- lm(prestg80~educ + maeduc + educ*maeduc,lab5)
+summ(mod.6,center = TRUE)
+
+interact_plot(mod.6, pred = educ, modx = maeduc, centered = c('educ', 'maeduc'))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

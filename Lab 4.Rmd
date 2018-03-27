@@ -39,7 +39,9 @@ summary(wrong)
 anova(wrong)
 plot(dat$instruction.numeric,dat$scores)
 abline(wrong)
-```
+```  
+
+
 #now doing it the right way.
 ```{r warning = FALSE, error = FALSE,message = FALSE, tidy = TRUE}
 right <- lm(scores~instruction,dat)
@@ -47,7 +49,9 @@ summary(right)
 anova(right)
 plot(dat$instruction,dat$scores)
 abline(right)
-```
+```  
+
+
 #loading some data
 ```{r warning = FALSE, error = FALSE,message = FALSE, tidy = TRUE}
 load("~/GitHub/Regression/hand4.RData")
