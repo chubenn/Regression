@@ -37,7 +37,7 @@ anova(mod.2,mod.3)
 #2
 ```{r}
 mod.4 <- lm(err~stress + exp + stress:exp, dat)
-summary(mod.4)
+summ(mod.4,center = TRUE)
 
 ggplot(dat, aes(x = exp, err, color = stress)) +
   geom_smooth(aes(linetype = stress), method = 'lm', se = F)
