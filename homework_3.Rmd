@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 ```
 
 Loading some data,packages, and function.
-```{r warnings = FALSE}
+```{r warnings = FALSE, messages = FALSE}
 library(tidyverse)
 library(psych)
 library(purrr)
@@ -21,6 +21,7 @@ library(jtools)
 library(lmSupport)
 library(lm.beta)
 library(lsr)
+library(QuantPsyc)
 load("C:/Users/Branly Mclanbry/Downloads/GSS1991HW.RData")
 load("C:/Users/Branly Mclanbry/Downloads/TOP2003.RData")
 hw1 <- GSS1991HW %>%
@@ -60,16 +61,24 @@ p_list <- list(hw1$educ,hw1$maeduc,hw1$prestg80)
 p_names <- names(hw1[2:4])
 ```
 #HW1
-```{r}
+Sex and education both significantly predict prestige _R_^2^ = .26, _F_(3,1158) = 134.32, _p_ < .001. However, not all variables contributed equally, education was a significant predictor (_b_* = .50, _p_ <.001) while sex was not (_b_* = -.11, _p_ = .73), and neither was the interaction (_b_* = .02, _p_ = .06)
+  
+Essentially, higher education predicts a higher occupational prestige, while sex and the interaction between sex and eduction do not. 
+```{r warnings = FALSE, message = FALSE}
 gss.dat <- lm(prestg80~sex*educ, hw1)
 summ(gss.dat,center = TRUE, digits = 5, confint = TRUE)
+lm.beta(gss.dat)
+modelEffectSizes(gss.dat)
 
-ggplot(gss.dat, aes(x = prestg80, educ, color = sex)) +
+ggplot(gss.dat, aes(x = educ, prestg80, color = sex)) +
   geom_smooth(aes(linetype = sex), method = 'lm', se = F)
 ```
 
 
 #HW2
+
+Mothers education and occupational prestige were transformed due to a violation in normality. Specifically a reflected square root for mother's education and a square root transformtion for prestige. Mothers education and education significantly predice prestige _R_^2^ = .23, _F_(3,1158) = 115, _p_ < .001. Education level(_b_* = .51, _p_ <.001) and mother's education (_b_* = .07, _p_ < . 01) significantly predicted occupational prestige. It is important to mention that mother's education was reflected so interpretation should be reversed.  
+The interaction was also significant (_b_* = .02, _p_ < .001) and the slope for mother's education one standard deviation above the mean (_b_ = 0.22, _p_ < .001), while at the mean (_b_ = .25,_p_ < .001) and one standard deviation below the mean (_b_ = .27, p<.001). Specifically that lower education provides a lower amount of prestige compared to higher education, which provides a larger amount of prestive.
 ```{r message = FALSE,warning = FALSE}
 walk2(p_list,p_names,pphehe)
 walk2(p_list,p_names,denss)
@@ -79,23 +88,24 @@ walk2(p_list,p_names,transformer)
 ##Creating new variables
 ```{r}
 hw1 <- hw1 %>%
-  mutate(maeduc_sqrt = (maeduc+1)^.5,
-         prestg80_sqrt = (prestg80+1)^.5,
-         max_maeduc = max(maeduc),
-         max_prest = max(prestg80),
-         maeduc_sqrt_ref = ((max_maeduc + 1) - maeduc)^.5,
-         prestg80_sqrt_ref = ((max_prest+1)-prestg80)^.5)
+  mutate(prestg80_sqrt = sqrt(prestg80),
+         maeduc_sqrt_ref = sqrt((max(maeduc) + 1) - maeduc))
 ```
 ##Running analysis
 ```{r}
-gss.dat.2 <- lm(prestg80_sqrt~maeduc_sqrt_ref*educ,hw1)
+gss.dat.2 <- lm(prestg80_sqrt~educ*maeduc_sqrt_ref,hw1)
 summ(gss.dat.2, center = TRUE, digits = 5, confint = TRUE)
-summary(gss.dat.2)
-sim_slopes(gss.dat.2,educ,maeduc_sqrt_ref,johnson_neyman = FALSE, cont.int = TRUE, centered = c('educ','maeduc_sqrt_ref'), digits = 5)
+gss.dat.2 %>% center_lm() %>% lm.beta()
+sim_slopes(gss.dat.2,maeduc_sqrt_ref,educ,johnson_neyman = FALSE, cont.int = TRUE, centered = c('educ','maeduc_sqrt_ref'), digits = 5)
 interact_plot(gss.dat.2,maeduc_sqrt_ref, educ,centered = c('educ','maeduc_sqrt_ref'))
-lm.beta(gss.dat.2)
+
 ```
-##h3 Addressing residuals and multicolinearity
+
+#HW3
+Normality of residuals suggests that multiple points stray from the line, which might suggest a problem, further analysis are necessary.
+Linearity of the residuals from the scale-location, and residuals vs fitted graph are somewhat straight but require further analysis. 
+Homoscedasticity is examined through the Breusch-pagan test which is significant, which suggests that homoscedasticity is met. 
+Multicollinearity is examined through inflation and tolerance factors which are within margins.
 ```{r}
 plot(gss.dat.2)
 n.2 <- 1162
@@ -105,40 +115,59 @@ tail(sort(mahun),10)
 1-pchisq(201.45,df = 3)
 vif(gss.dat.2)
 1/vif(gss.dat.2)
+lmtest::bptest(gss.dat.2,varformula = ~fitted.values(gss.dat.2),FALSE,hw1)
 ```
-#hw4
-loading in data
+
+#HW4
+##4A
+Results from the ANCOVA suggests that employees make a larger begining salary based off of education _F_ = 302.80(1,471), _p_ <.001.  It is important to look at the effect sizes, specfically that education ($\eta^2$ = .38) accounts for a larger amount of explanation compared to minority status ($\eta^2$ = .01)
+
+Loading in data
 ```{r}
-load("C:/Users/Branly Mclanbry/Downloads/employee.RData")
-hw2 <- employee
+load("C:/Users/Branly Mclanbry/Downloads/employee (7).RData")
+hw2 <- employee %>%
+  mutate(educ.num = as.numeric(educ))
 ```
 Ancova model
 ```{r}
-salary.dat <- aov(salbegin ~educ + minority,hw2)
-Anova(salary.dat, type = "III")
-salary.dat.2 <- aov(salbegin~educ * minority,hw2)
-Anova(salary.dat.2)
-etaSquared(salary.dat.2)
+salary.dat2 <- aov(salbegin~educ+minority,hw2)
+Anova(salary.dat2, type = "III")
+etaSquared(salary.dat2)
 ```
-##hw4.c
+##4B
+Significant interaction suggests that ANCOVA assumptions are violated.
 ```{r}
-salary.lm<- lm(salbegin ~educ + minority,hw2)
+salary.dat2 <- aov(salbegin~educ*minority,employee)
+Anova(salary.dat2, type = "III")
+```
+##4C
+Still, running the model as a linear model provides slightly different results _R_^2^ = .43, _F_(3.470) = 119.08, _p_ < .001. However, this suggests that education (_b_* = .69, _p_ <.001), minority (_b_* = .71, _p_ < .001) and the interaction (_b_* = -.42, _p_<.001) predicts beginning salary.
+
+Essentially, higher levels of education lead to a higher beginning salary especially if you are a non-minority. Those in the minority status with equivalent education start at a lower salary. 
+```{r}
+salary.lm<- lm(salbegin ~ educ * minority,employee)
 summ(salary.lm, center = TRUE, digits = 5, confint = TRUE)
+lm.beta(salary.lm)
+
+sim_slopes(salary.lm,minority,educ,johnson_neyman = FALSE, cont.int = TRUE, centered = c('educ','minority'), digits = 5)
+
+ggplot(employee, aes(educ, salbegin)) +
+  geom_smooth(aes(color = minority), method = "lm", se = F)
 ```
 
 #5 
-arcsine 
+Authors tested ANCOVA by utilizing regression to test interactions between grade and condition on performance. This was met because the interaction was not significant _p_ = .40 . ANCOVA suggests fairly similar results _F_(1,22) = 3.92, _p_ = .06
 ```{r}
 h5 <- TOP2003 %>% janitor::clean_names()
-h5.1 <- lm(quiz2 ~ current, data = h5)
-summary(h5.1)
-h5.2 <- lm(quiz2 ~ current + condit, data = h5)
-summary(h5.2)
-h5.3 <- lm(quiz2 ~ current * condit, data = h5)
+h5.2 <- aov(quiz2 ~ current + condit, data = h5)
+Anova(h5.2)
+h5.3 <- aov(quiz2 ~ current * condit, data = h5)
 summary(h5.3)
 ```
 
-#hw6
+#HW6
+Power analysis suggests sample size around 140 for significant beta for quality.
+
 ```{r include = FALSE}
 load("C:/Users/Branly Mclanbry/Downloads/grants.RData")
 require(MASS)
@@ -384,6 +413,6 @@ Analysis
 ```{r}
 cor.dat <- cor(grants)
 round(cor.dat,2)
-pwr.MRC_all(-.80,-.60,-.24,.72,.45,.56,320)
-pwr.MRC_all(-.80,-.60,-.24,.72,.45,.56,110)
+pwr.MRC_all(-.24,.45,.56,-.80,-.60,.72,140)
+pwr.MRC_all(-.80,-.60,-.24,.72,.45,.56,150)
 ```
