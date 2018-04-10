@@ -1,0 +1,100 @@
+---
+title: "Lab 6"
+author: "Ben Chu"
+date: "April 10, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+load("C:/Users/Branly Mclanbry/Downloads/lab6.RData")
+```
+
+cleaning data
+```{r}
+lab <- lab6 %>%
+  separate(date_, c("month.factor","year1"), sep = " ") %>%
+  mutate(law.numeric = as.numeric(lawprepo))
+```
+
+#1
+```{r}
+b <- ggplot(lab,aes(x=fct_inorder(month.factor),y = arrests))
+b+stat_summary(fun.y=mean,geom="bar",position="dodge")
+```
+
+  I'm not going to lie, it looks like there are more arrests happening from April to August, this is probably because ice cream sales are going up and apparently there is a correlation between ice cream sales and crime. 
+  
+#2
+```{r}
+b <- ggplot(lab,aes(x=(time),y = arr_adj))
+b+stat_summary(fun.y=mean,geom="bar",position="dodge")
+```  
+
+Yes, Yes there does seem to be a reduction in arrests at that point.
+
+#3
+```{r}
+mod <- lm(arr_adj~law.numeric,lab)
+summary(mod)
+```
+##a Some durbins
+There is not a autocorrelation so the assumptions are not met.
+```{r}
+lmtest::dwtest(mod)
+```
+##b Some Pankrantz
+There are a series of lines spiking across the CI, so assumption is not met.
+```{r}
+acf(residuals(mod), ci = .79, ylab="1.25 ACF/SE criteria")
+acf(residuals(mod), ci = .89, ylab="1.60 ACF/SE criteria")
+```
+
+##c Some BoxLjuns
+These are just significant at the 1 lag.
+```{r}
+Box.test(residuals(mod), lag = 1, type = c("Ljung-Box"))
+Box.test(residuals(mod), lag = 2, type = c("Ljung-Box"))
+Box.test(residuals(mod), lag = 3, type = c("Ljung-Box"))
+Box.test(residuals(mod), lag = 4, type = c("Ljung-Box"))
+```
+
+##d
+Quite Frankly, a LM is not appropriate to use.
+
+#4
+```{r}
+library(forecast)
+fit.1 <- Arima(lab$arr_adj,lab$law.numeric,order=c(19,0,0))
+fit.3 <- Arima(lab$arr_adj,lab$law.numeric,order=c(3,0,0))
+fit.2 <- Arima(lab$arr_adj,lab$law.numeric,order=c(2,0,0))
+acf(residuals(fit.1, ci=.79,ylab="1.25 ACF/SE criteria"))
+acf(residuals(fit.1, ci=.89,ylab="1.60 ACF/SE criteria"))
+```
+
+##a
+Assumptions
+```{r}
+acf(residuals(fit.1), ci = .79, ylab="1.25 ACF/SE criteria")
+acf(residuals(fit.1), ci = .89, ylab="1.60 ACF/SE criteria")
+```
+##b
+```{r}
+Box.test(residuals(fit.1), lag = 1, type = c("Ljung-Box"))
+Box.test(residuals(fit.1), lag = 2, type = c("Ljung-Box"))
+Box.test(residuals(fit.1), lag = 3, type = c("Ljung-Box"))
+Box.test(residuals(fit.1), lag = 4, type = c("Ljung-Box"))
+```
+##c
+19 autoregressions seemed to work.
+
+  
+#5
+```{r}
+summary(fit.1)
+test <- fit.1$coef/sqrt(diag(fit.1$var.coef))
+(1-pnorm(abs(fit.1$coef)/sqrt(diag(fit.1$var.coef))))*2
+```
+There was a significant decrease in arrests after a new law was instituted _b_ = 3.26, _p_ < .05
+

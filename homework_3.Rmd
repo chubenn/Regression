@@ -7,10 +7,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
-```
-
-Loading some data,packages, and function.
-```{r warnings = FALSE, messages = FALSE}
 library(tidyverse)
 library(psych)
 library(purrr)
@@ -22,6 +18,10 @@ library(lmSupport)
 library(lm.beta)
 library(lsr)
 library(QuantPsyc)
+```
+
+Loading some data,packages, and function.
+```{r warnings = FALSE, messages = FALSE}
 load("C:/Users/Branly Mclanbry/Downloads/GSS1991HW.RData")
 load("C:/Users/Branly Mclanbry/Downloads/TOP2003.RData")
 hw1 <- GSS1991HW %>%
@@ -155,7 +155,7 @@ ggplot(employee, aes(educ, salbegin)) +
   geom_smooth(aes(color = minority), method = "lm", se = F)
 ```
 
-#5 
+#HW5 
 Authors tested ANCOVA by utilizing regression to test interactions between grade and condition on performance. This was met because the interaction was not significant _p_ = .40 . ANCOVA suggests fairly similar results _F_(1,22) = 3.92, _p_ = .06
 ```{r}
 h5 <- TOP2003 %>% janitor::clean_names()
