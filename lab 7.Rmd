@@ -1,0 +1,56 @@
+---
+title: "Lab 7"
+author: "Ben Chu"
+date: "April 23, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(psych)
+load("C:/Users/Branly Mclanbry/Downloads/world95_lab7.RData")
+```
+
+```{r}
+l7.2 <- world95_lab7
+
+comp.l7 <- l7.2 %>%
+  select(lifeexpf,lifeexpm,birth_rt,death_rt,pop_incr)
+```
+#lab 1a
+There will probably be about 2 components, when I run a simple scree plot, it mostly shows 2 variables.
+```{r}
+scree(comp.l7)
+```
+
+#lab 1a+2c
+2 factors is confirmed by the test of hypothesis and the ss loadings?
+```{r}
+comp.fn <- principal(comp.l7,nfactors = 2, rotate = "varimax")
+fa.sort(comp.fn)
+```
+#lab 1f
+Eigenvalues are a measure of explained variance, so a eigenvalue of 1 divided by 2 factors is about 50% explained variance. Which is fairly high.
+```{r}
+comp.fa <- fa(comp.l7,nfactors = 2, rotate="varimax",fm = "pa")
+fa.sort(comp.fa)
+```
+#lab 2
+Values changed, but i'm not entirely sure what's supposed to be whacky.But the items are not correlated so we see low eigenvalues?
+```{r}
+comp.ob <- fa(comp.l7, nfactors = 2, rotate = "oblimin", fm = "pa")
+fa.sort(comp.ob)
+```
+
+#lab 3
+The heywood case is when final communality exceeds one which is basically overestimated explained variance, or there is negative variance. Basically, some items are overly weighted.
+
+#lab4
+```{r}
+load("C:/Users/Branly Mclanbry/Downloads/lab7cfa.RData")
+l7 <- lab7cfa
+scree(l7)
+comp.ft <- fa(l7,nfactors = 3, rotate="varimax",fm = "pa")
+fa.sort(comp.ft)
+```
