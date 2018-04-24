@@ -50,13 +50,13 @@ The heywood case is when final communality exceeds one which is basically overes
 ```{r}
 load("C:/Users/Branly Mclanbry/Downloads/lab7cfa.RData")
 l7 <- lab7cfa
-cf_model <- "
-  ag =~ 185+188+190+191+192
-  co =~ 166+174+184+210+214
-  ex =~ 178+198+201+208+216
-  ne =~ 154 +160+163+164+171
-  op =~ 165+175+179+197+203
-"
+cf_model <- '
+  ag =~ q185+q188+q190+q191+q192
+  co =~ q166+q174+q184+q210+q214
+  ex =~ q178+q198+q201+q208+q216
+  ne =~ q154+q160+q163+q164+q171
+  op =~ q165+q175+q179+q197+q203
+'
 library(lavaan)  
 fit <- cfa(cf_model, data = l7, mimic = "MPLUS")
 summary(fit,fit.measures = TRUE, standardized = TRUE)
