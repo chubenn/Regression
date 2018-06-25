@@ -1,0 +1,170 @@
+---
+title: "Homework 4"
+author: "Ben Chu"
+date: "May 2, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+loading in packages/data and then doing a little cleaning
+```{r error=FALSE, message=FALSE, warning=FALSE, }
+library(tidyverse)
+library(car)
+library(psych)
+library(forecast)
+library(purrr)
+library(lmtest)
+load("C:/Users/Branly Mclanbry/Downloads/heat.RData")
+
+hw1 <- heat %>%
+  janitor::clean_names()%>%
+  mutate(date.fac = factor(date))
+
+var <- list(hw1$nviolent,hw1$rape,hw1$rob)
+names <- c("crime","rape","robbery")
+
+```
+writing a function and then just mapping it across the three variables
+```{r}
+dur_pan_box <- function(x,name){
+  mod <- lm(x ~ year + temp + age, hw1)
+  
+  print(name)
+  print(summary(mod))
+  dwtest(mod)
+  
+  x79 <- acf(residuals(mod), ci = .79, main = paste(name, "(1.25 ACF/SE criteria)"))
+  x89 <- acf(residuals(mod), ci = .89, main = paste(name, "(1.60 ACF/SE criteria)"))
+  print(x79)
+  print(x89)
+  test<- lapply(1:6,function(x){
+    Box.test(residuals(mod),lag = x, type = "Ljung-Box")
+  })
+  
+  print(test)
+  }
+```
+#1a
+```{r}
+walk2(var,names,dur_pan_box)
+```
+Writing an ARIMA function
+```{r}
+pred <- select(hw1,temp,age,year)
+arimar <- function(x){
+  for(i in 1:3){
+  armod <- Arima(hw1[x], xreg = pred, order = c(i,0,0))
+  
+  acf(residuals(armod), ci = .79, main = paste(x, "(1.25 ACF/SE criteria)"))
+  acf(residuals(armod), ci = .89, main = paste(x, "(1.60 ACF/SE criteria)"))
+  
+  sapply(1:6, function(x){
+    print(Box.test(residuals(armod),lag = x, type = "Ljung-Box"))
+  })
+  print("t values")
+  print(as.list((armod$coef)/sqrt(diag(armod$var.coef))))
+  print("p values")
+  print(as.list((1-pnorm(abs(armod$coef)/sqrt(diag(armod$var.coef))))*2))
+  print(armod)
+  }
+}
+```
+#1b,
+
+It looks like 2 autocorrelative terms were used for robbery and property crimer, while 1 autocorrelative term was used for rape.
+
+```{r}
+map(c("nviolent","rape","rob"),arimar)
+```
+#1c
+
+Anderson and his colleagues utilized Box-Ljung/chi-square tests for autocorrelations/fit. It looks like they used six lags for residuals.
+
+#1d
+
+A model predicting violence from temperature, year, and age indicated issues with autocorrelation. Two autoregressive terms were used in the Arima Model.Year (*b* = 29.67, *p* < .001) and age (*b* = 101.02, *p* < .001) were significant while temperature (*b* = -2.36, *p* = .85) were not 
+
+A model predicting rape from temperature, year, and age indicated issues with autocorrelation. One autoregressive terms were used in the Arima Model.Year (*b* = 0.66, *p* < .001) was significant but age (*b* = 0.56, *p* = .16) and temperature (*b* = 0.24, *p* = .41) were not 
+
+A model predicting Robbery from temperature, year, and age indicated issues with autocorrelation. Two autoregressive terms were used in the Arima Model.Year (*b* = 4.90, *p* < .001) and age (*b* = 9.76, *p* < .001) but temperature (*b* = 1.18, *p* = .46) were not.
+
+ACF and Pankrantz criteria were used, but ultimately ignored. I just looked at the Box-Ljung until it hit over .05 for the lags and called it good. This led me to the ARIMA models andI found which autoregressive terms that were the *best*. Year seems to be significant for all models but age fluctuates and temperature is not significant at all.
+
+
+#2a
+The added proportional values total about 55% which suggests a little more than half of the variance can be explained with the four factors. The first factor is a(1-3) while the second factor is a(21-23) and the third factor a(12,16-18 and 24) while the fourth factor is a(14-16). 
+```{r}
+load("C:/Users/Branly Mclanbry/Downloads/schumm.RData")
+scree(schumm)
+fa.parallel(schumm, fa = "fa")
+vss(schumm, rotate = "varimax", fm = "fa")
+yy<-fa(schumm, nfactors = 4, rotate = "varimax", fm = "pa")
+fa.sort(yy)
+fa.sort(yy$loadings)
+fa.diagram(yy)
+```
+#2b  
+I suppose the editors could have added communalities, total percentage explained and individual contributions, uniqueness, correlations of regressions, multiple R squared, minimum correlations, mean item complexity. I might have added a diagram to explain the factor loadings so it's easy to read, kinda like the graph I have provided. 
+
+#2c
+Frankly, four factors seems to work well. running it with five factors does not increase the amount explained that much (4%).
+```{r}
+yyz<-fa(schumm, nfactors = 5, rotate = "varimax", fm = "pa")
+fa.sort(yyz)
+fa.sort(yyz$loadings)
+```
+
+#3a
+
+Looking at age,sex,education category and basevole, we see that rich older females who are college educated and already drinking are more likely to drink wrine (chi^2 = 185.62, *p* <.001). This model further breaks down into age (*b* = .03, *p* < .001), females (*b* = 1.75, *p* <.001) education at the college level (*b* = .65, *p* <.05), income (*b* = .27, *p* < .001), and base volume (*b* = -0.01, *p* < .01).
+```{r}
+load("C:/Users/Branly Mclanbry/Downloads/driver.RData")
+mod.3 <- glm(pdrink ~ age + sex + educar + income + basevol, data = driver, family = binomial())
+summary(mod.3)
+exp(coef(mod.3))
+exp(confint(mod.3))
+modchi <- mod.3$null.deviance-mod.3$deviance
+chidf  <- mod.3$df.null - mod.3$df.residual
+chi.pr <- 1-pchisq(modchi,chidf)
+chi.pr
+modchi
+table(mod.3$y,fitted(mod.3)>.5)
+```
+```{r}
+mod.age <- glm(pdrink ~ sex + educar + income + basevol, data = driver, family = binomial())
+mod.sex <- glm(pdrink ~ age + educar + income + basevol, data = driver, family = binomial())
+mod.educar <- glm(pdrink ~ age + sex + income + basevol, data = driver, family = binomial())
+mod.income <- glm(pdrink ~ age + sex + educar + basevol, data = driver, family = binomial())
+mod.basevol <- glm(pdrink ~ age + sex + educar + income, data = driver, family = binomial())
+anova(mod.3,mod.age, test = "Chisq")
+anova(mod.3,mod.sex, test = "Chisq")
+anova(mod.3,mod.educar, test = "Chisq")
+anova(mod.3,mod.income, test = "Chisq")
+anova(mod.3,mod.basevol, test = "Chisq")
+```
+
+#4
+Teacher expectation is related to achievement (*b* = .71, *95% CI* [0.38,1.11]), and climate (*b* = .84, *95% CI* [0.41,1.11]), while climate is related to achievement (*b* = 0.42, *95% CI*[0.12,0.69]). The indirect effect is significant (*b* = 0.25, *95% CI[0.10,0.95]). One thing is cool is that the c path drops out(*b* = 0.35, *95% CI* [-0.08,0.95]), so while this does not matter much, it is interesting.
+
+Climate fully mediates the relationship between teacher expectations and achievement.
+```{r}
+load("C:/Users/Branly Mclanbry/Downloads/hw4_med.RData")
+model4 <- function(iv, dv, med, data, samples=50) {
+  model <- paste0(med, " ~ a*", iv, "
+                  ", dv, " ~ b*", med, " + cp*", iv, "
+                  ind := a*b
+                  c := cp + a*b")
+  set.seed(1839)
+  out <- lavaan::parameterEstimates(
+    lavaan::sem(model=model, data=data, se="boot", bootstrap=samples), 
+    boot.ci.type="bca.simple")
+  out[7,c(6:8)] <- NA
+  out <- out[c(1,2,3,7,8),c(4:10)]
+  rownames(out) <- 1:nrow(out)
+  return(out)
+}
+outcome <- model4("Teacher","Achieve","Climate",hw4_med)
+knitr::kable(outcome)
+```
